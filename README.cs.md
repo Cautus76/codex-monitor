@@ -4,7 +4,21 @@
 
 Neoficiální ukazatel **aktuálních limitů Codexu** pro **elementary OS / Pantheon Wingpanel 8**. V horní liště zobrazuje zbývající pětihodinový a týdenní limit. Obsahuje i terminálový příkaz `codex-limits`. Obnovuje údaje každých 60 sekund a používá stávající přihlášení do Codex CLI.
 
-**Stav: testovací verze; načítání pluginu je potřeba ověřit přímo v Pantheonu.** Projekt není oficiálně spojen s OpenAI ani elementary.
+**Stav: testovací verze; indikátor funguje v lokální instalaci, ale funkční zdrojové soubory je ještě třeba synchronizovat.** Projekt není oficiálně spojen s OpenAI ani elementary.
+
+## Ověření v praxi a stav zdrojových souborů
+
+Dne 15. 10. 2026 uživatel potvrdil, že indikátor funguje v prostředí Pantheon. **Pozor:** funkční lokální instalace byla upravována ještě po vytvoření původního testovacího archivu. Soubory v tomto repozitáři proto **zatím nemusí odpovídat ověřené funkční instalaci**, dokud neproběhne jejich synchronizace. Nejde zatím o označenou stabilní verzi.
+
+Pokud lišta hlásí `Codex: nedostupný`, ale `python3 codex-limits.py --short` v pracovní složce zobrazuje procenta, nejprve zkontroluj skutečně nainstalovaný skript:
+
+```bash
+ls -l ~/.local/bin/codex-limits
+python3 ~/.local/share/codex-monitor/codex-limits.py --short
+codex-limits --short
+```
+
+Lišta používá `~/.local/share/codex-monitor/codex-limits.py`, **nikoliv** soubor ve složce staženého projektu. Úprava pracovní kopie se sama neprojeví v nainstalované verzi.
 
 ## Požadavky
 
