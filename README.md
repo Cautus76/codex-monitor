@@ -2,13 +2,13 @@
 
 **English** · [Čeština](README.cs.md)
 
-A small, unofficial live Codex usage monitor for **elementary OS / Pantheon Wingpanel 8**. Displays remaining 5-hour and weekly quotas in the top bar and provides a `codex-limits` terminal command. Refreshes every 60 seconds, using your existing Codex CLI ChatGPT login.
+A small, unofficial live Codex usage monitor for **elementary OS / Pantheon Wingpanel 8**. Displays remaining 5-hour and weekly quotas, plus time until the 5-hour reset, in the top bar and provides a `codex-limits` terminal command. Refreshes every 60 seconds, using your existing Codex CLI ChatGPT login.
 
-**Status: preview; local panel operation reported working, but tested source still needs syncing.** Not affiliated with or endorsed by OpenAI or elementary.
+**Status: preview; Wingpanel display confirmed working on one Pantheon installation (15 October 2026).** Not affiliated with or endorsed by OpenAI or elementary.
 
 ## Field test and current source status
 
-The indicator has been reported working on a real Pantheon installation (15 October 2026). **Important:** the working installation received local fixes after the initial preview archive was prepared. The files in this repository should **not yet be assumed to match that tested installation** until the updated source files are synchronized and verified. This is not a tagged stable release.
+On 15 October 2026 the indicator was reported working on a real Pantheon installation. The updated 5-hour reset countdown is now included in the repository. Python and shell-script syntax were checked, but a clean-system install and Wingpanel compilation have not been independently verified. No stable release has been tagged.
 
 If the panel says `Codex: unavailable` but running `python3 codex-limits.py --short` in your working directory prints percentages, first verify which script is installed:
 
@@ -87,5 +87,5 @@ For terminal override use `codex-limits --lang en` or `codex-limits --lang cs`.
 
 - Queries `account/rateLimits/read` through `codex app-server --stdio` with the existing CLI login. It does not read or publish `~/.codex/auth.json`.
 - If offline or unauthenticated, displays an unavailable state rather than stale numbers.
-- Query every 60 seconds when loaded in the panel. The remote API and CLI behavior may change across Codex versions.
+- Queries every 60 seconds when loaded in the panel. The 5-hour reset countdown is computed from the reported reset timestamp. The remote API and CLI behavior may change across Codex versions.
 - Never run unknown installation scripts without reviewing them first.
