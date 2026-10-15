@@ -90,6 +90,15 @@ def main():
             print(json.dumps(result, ensure_ascii=False))
         elif options.short:
             parts = [f"{label} {result['limits'][key]['left_percent']:.0f}%" for key, label in [('primary', '5h'), ('secondary', '7d')] if key in result['limits']]
+            primary = result['limits'].get('primary')
+            if primary and primary.get('resets_at') and 'primary' in result['limits']:
+                remaining = max(0, int(primary['resets_at'] - time.time()))
+                hours, remainder = divmod(remaining, 3600)
+                minutes = (remainder + 59) // 60
+                if minutes == 60:
+                    hours += 1
+                    minutes = 0
+                parts[0] += f" (reset {hours}h {minutes:02d}m)"
             print('Codex ' + ' | '.join(parts))
         else:
             for key, title in [('primary', '5-hour limit' if lang == 'en' else 'Pětihodinový limit'),
