@@ -4,7 +4,21 @@
 
 A small, unofficial live Codex usage monitor for **elementary OS / Pantheon Wingpanel 8**. Displays remaining 5-hour and weekly quotas in the top bar and provides a `codex-limits` terminal command. Refreshes every 60 seconds, using your existing Codex CLI ChatGPT login.
 
-**Status: preview, needs testing on a real Pantheon installation.** Not affiliated with or endorsed by OpenAI or elementary.
+**Status: preview; local panel operation reported working, but tested source still needs syncing.** Not affiliated with or endorsed by OpenAI or elementary.
+
+## Field test and current source status
+
+The indicator has been reported working on a real Pantheon installation (15 October 2026). **Important:** the working installation received local fixes after the initial preview archive was prepared. The files in this repository should **not yet be assumed to match that tested installation** until the updated source files are synchronized and verified. This is not a tagged stable release.
+
+If the panel says `Codex: unavailable` but running `python3 codex-limits.py --short` in your working directory prints percentages, first verify which script is installed:
+
+```bash
+ls -l ~/.local/bin/codex-limits
+python3 ~/.local/share/codex-monitor/codex-limits.py --short
+codex-limits --short
+```
+
+The panel uses `~/.local/share/codex-monitor/codex-limits.py`, **not** the file in the downloaded project directory. Changing a downloaded copy does not automatically update the installed copy. Avoid running commands from untrusted sources.
 
 ## Requirements
 
