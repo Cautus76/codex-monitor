@@ -11,7 +11,7 @@ Codex 5h 63% (reset 3h 31m) | 7d 62%
 
 Čísla jsou pouze ukázka. Procenta znamenají **zbývající**, nikoli spotřebovanou kapacitu. Obnova probíhá při spuštění, otevření nabídky a každých 60 sekund. Dotazy běží v pracovním vlákně a nepřekrývají se. Nejsou potřeba žádné balíčky pro pip.
 
-Verze **1.0.0-rc.1** je veřejné předběžné vydání. Uživatel potvrdil funkčnost původní instalace na elementary OS 8.1. Překlad, živé dotazy a izolovaná instalace i odinstalace byly ověřeny s Wingpanelem 8.0.4 a Codex CLI 0.162.1. Načtení nové instalace v běžícím panelu a čistá instalace na jiném počítači zatím ověřeny nejsou. Projekt není oficiálně spojen s OpenAI ani elementary.
+Verze **1.0.0-rc.1** zůstává veřejným předběžným vydáním. Dne 16. října 2026 uživatel oznámil úspěšný test této verze na Macu mini 2014 s Linuxem, Pantheonem a Wingpanelem 8.0.4: prošlo všech sedm Python testů, instalátor indikátor sestavil a nainstaloval, fungovaly živé limity i odpočet resetu a po odhlášení a přihlášení se indikátor načetl do panelu. Uživatel potvrdil správnost zobrazovaných hodnot. Čistá instalace na druhém počítači zůstává **neověřená** a je podmínkou stabilního v1.0.0. Viz [VALIDATION.md](VALIDATION.md) a [příprava stabilního vydání](RELEASE_PLAN.md). Projekt není oficiálně spojen s OpenAI ani elementary.
 
 ## Požadavky
 

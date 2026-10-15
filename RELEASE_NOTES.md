@@ -19,6 +19,10 @@ The archive contains sources and the installer; the module is compiled against y
 
 Passed seven Python regression tests, Python and shell syntax checks, actual Vala compilation, isolated install/uninstall including restricted desktop PATH, and live Codex rate-limit queries on elementary OS 8.1 / Wingpanel 8.0.4 / Codex CLI 0.162.1. Existing installed files were preserved.
 
-**This is a prerelease:** the original indicator was confirmed working by its user, but loading this newly packaged version in a running Wingpanel and a clean second-machine installation could not be verified in this session. These checks remain before stable v1.0.0. The Codex app-server interface is experimental. See VALIDATION.md.
+**Target-machine update, reported 16 October 2026:** the user successfully tested rc.1 on a Mac mini 2014 running Linux, Pantheon and Wingpanel 8.0.4. All seven Python tests passed; installation, live queries, reset countdown and loading into Wingpanel after logout/login worked. The user confirmed that displayed values were correct.
+
+**This remains a prerelease:** a clean installation on a second computer is still unverified and is required before stable v1.0.0. The report did not separately confirm timed refresh or offline/recovery behavior. The Codex app-server interface is experimental. See the current [VALIDATION.md](https://github.com/Cautus76/codex-monitor/blob/main/VALIDATION.md) and [stable release preparation](https://github.com/Cautus76/codex-monitor/blob/main/RELEASE_PLAN.md).
+
+This documentation update does not change the rc.1 tag, program version or downloadable archive/checksum.
 
 No account data, credentials or machine-specific paths are included in the release archive.

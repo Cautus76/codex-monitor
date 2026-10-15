@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — stable v1.0.0 preparation
+
+- Record the user's successful rc.1 test on a Mac mini 2014 running Linux, Pantheon and Wingpanel 8.0.4, reported on 2026-10-16: seven passing Python tests, successful build/install, live limits, correct reset countdown, panel loading after logout/login and confirmed displayed values.
+- Update English/Czech documentation and prepare a stable-release checklist and draft notes.
+- No runtime, installer or visual changes; version remains 1.0.0-rc.1.
+- Clean installation on a second computer remains unverified. Stable v1.0.0 has not been approved or published.
+
 ## 1.0.0-rc.1 — 2026-10-15
 
 First packaged public prerelease, preserving the previously working Wingpanel appearance.
@@ -16,7 +23,7 @@ First packaged public prerelease, preserving the previously working Wingpanel ap
 
 ### Verification and release status
 
-Python regression tests, shell syntax, real Vala compilation, isolated install/uninstall and real-account queries passed on elementary OS 8.1 / Wingpanel 8.0.4 / Codex CLI 0.162.1. The original working installation was not modified. Loading the new release in a running Wingpanel and installation on a second clean machine remain to be verified; hence **rc.1**, not stable v1.0.0. See VALIDATION.md.
+Python regression tests, shell syntax, real Vala compilation, isolated install/uninstall and real-account queries passed on elementary OS 8.1 / Wingpanel 8.0.4 / Codex CLI 0.162.1. The original working installation was not modified. At publication, loading the new release in a running Wingpanel and installation on a second clean machine remained unverified. The subsequent target-machine report confirms panel loading; the second-machine clean installation remains outstanding. The release remains **rc.1**, not stable v1.0.0. See VALIDATION.md.
 
 ## Earlier preview — 2026-10-15
 

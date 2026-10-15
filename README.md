@@ -11,7 +11,7 @@ Codex 5h 63% (reset 3h 31m) | 7d 62%
 
 Example values only. Percentages mean **remaining**, not used. The indicator refreshes on startup, when opened and every 60 seconds. Requests run in a worker thread and never overlap. No Python packages are required.
 
-Version **1.0.0-rc.1** is a public prerelease. The existing indicator was confirmed working by its user on elementary OS 8.1. Compilation, live queries and isolated installation/uninstallation were tested with Wingpanel 8.0.4 and Codex CLI 0.162.1. Loading the new installation in a running panel and a clean installation on another machine remain unverified. Not affiliated with OpenAI or elementary.
+Version **1.0.0-rc.1** remains a public prerelease. On 16 October 2026, the user reported a successful test of this version on a Mac mini 2014 running Linux, Pantheon and Wingpanel 8.0.4: all seven Python tests passed, the installer built and installed the indicator, live limits and the reset countdown worked, and the indicator loaded after logout/login. The user confirmed the displayed values were correct. A clean installation on a second machine remains **unverified** and is required before stable v1.0.0. See [VALIDATION.md](VALIDATION.md) and the [stable release preparation](RELEASE_PLAN.md). Not affiliated with OpenAI or elementary.
 
 ## Requirements
 
