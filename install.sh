@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")"
+if [[ "${EUID}" == 0 ]]; then
+  echo 'Run as your desktop user, without sudo. The installer requests sudo for the module only.' >&2
+  exit 1
+fi
 LANG_CHOICE=en
 [[ "${LC_ALL:-${LANG:-}}" == cs* ]] && LANG_CHOICE=cs
 say(){ if [[ "$LANG_CHOICE" == cs ]]; then echo "$2"; else echo "$1"; fi; }
@@ -13,28 +17,36 @@ fi
 if ! codex app-server --help >/dev/null 2>&1; then
   say 'Codex app-server is unavailable. Please update Codex CLI.' 'Codex app-server není dostupný. Aktualizuj Codex CLI.'; exit 1
 fi
-if ! codex login status 2>&1 | grep -q 'Logged in'; then
+if ! codex login status >/dev/null 2>&1; then
   say 'Codex login required; launching official login.' 'Je potřeba přihlášení do Codexu; spouštím oficiální přihlášení.'
   codex login
 fi
 missing=()
-for cmd in valac pkg-config python3; do command -v "$cmd" >/dev/null || missing+=("$cmd"); done
+for cmd in valac pkg-config python3 cc; do command -v "$cmd" >/dev/null || missing+=("$cmd"); done
 if ! pkg-config --exists wingpanel gtk+-3.0 gmodule-2.0 2>/dev/null || ((${#missing[@]})); then
   say 'Missing build dependencies. Install using apt?' 'Chybí sestavovací závislosti. Nainstalovat pomocí apt?'
   read -r -p '[y/N] ' answer
   [[ "${answer,,}" == y || "${answer,,}" == a ]] || exit 1
   sudo apt-get update
-  sudo apt-get install -y valac pkg-config libwingpanel-dev libgtk-3-dev libglib2.0-dev python3
+  sudo apt-get install -y build-essential valac pkg-config libwingpanel-dev libgtk-3-dev libglib2.0-dev python3
 fi
 if ! pkg-config --exists wingpanel gtk+-3.0 gmodule-2.0; then
   say 'Wingpanel development packages not found. Pantheon Wingpanel 8 is required.' 'Nenalezeny vývojové balíčky Wingpanelu. Je vyžadován Pantheon Wingpanel 8.'; exit 1
 fi
+pkg-config --atleast-version=8 wingpanel || { echo 'Wingpanel 8 or newer is required.' >&2; exit 1; }
 libdir="$(pkg-config --variable=indicatorsdir wingpanel)"
 [[ -n "$libdir" && -d "$libdir" ]] || { say 'Wingpanel plugin directory not found.' 'Složka pluginů Wingpanelu nenalezena.'; exit 1; }
+codex_path="$(command -v codex)"
+[[ "$codex_path" == /* ]] || { echo 'Codex must be an executable on PATH.' >&2; exit 1; }
 mkdir -p build "$HOME/.local/share/codex-monitor" "$HOME/.local/bin"
 say 'Building Wingpanel module…' 'Sestavuji modul Wingpanelu…'
 valac --library=codex-monitor --pkg wingpanel --pkg gtk+-3.0 --pkg gmodule-2.0 -X -fPIC -X -shared -o build/libcodex-monitor.so Indicator.vala
+say 'Checking live limits before changing the installation…' 'Kontroluji živé limity před změnou instalace…'
+python3 codex-limits.py --short
+sudo -v
 install -m 755 codex-limits.py "$HOME/.local/share/codex-monitor/codex-limits.py"
+printf '%s\n' "$codex_path" > "$HOME/.local/share/codex-monitor/codex-path"
+printf '%s\n' "$libdir" > "$HOME/.local/share/codex-monitor/indicators-dir"
 ln -sfn "$HOME/.local/share/codex-monitor/codex-limits.py" "$HOME/.local/bin/codex-limits"
 say 'Checking live limits…' 'Kontroluji živé limity…'
 "$HOME/.local/bin/codex-limits" || say 'Live query failed; check your Codex login/network.' 'Živý dotaz selhal; zkontroluj přihlášení a síť.'
@@ -43,4 +55,7 @@ if [[ -f "$libdir/libcodex-limits.so" ]]; then
 fi
 say 'Installing Wingpanel module (administrator permission required)…' 'Instaluji modul Wingpanelu (vyžaduje oprávnění správce)…'
 sudo install -m 644 build/libcodex-monitor.so "$libdir/libcodex-monitor.so"
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+  echo 'Terminal command: ~/.local/bin/codex-limits (add ~/.local/bin to PATH if desired).'
+fi
 say 'Installation complete. Log out and log back in to load the indicator.' 'Instalace hotová. Odhlas se a znovu přihlas pro načtení indikátoru.'

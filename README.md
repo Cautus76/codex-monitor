@@ -2,90 +2,107 @@
 
 **English** · [Čeština](README.cs.md)
 
-A small, unofficial live Codex usage monitor for **elementary OS / Pantheon Wingpanel 8**. Displays remaining 5-hour and weekly quotas, plus time until the 5-hour reset, in the top bar and provides a `codex-limits` terminal command. Refreshes every 60 seconds, using your existing Codex CLI ChatGPT login.
+An unofficial Codex usage indicator for elementary OS / Pantheon Wingpanel 8.
+Shows the remaining 5-hour and weekly quotas, plus the time until the 5-hour reset:
 
-**Status: preview; Wingpanel display confirmed working on one Pantheon installation (15 October 2026).** Not affiliated with or endorsed by OpenAI or elementary.
-
-## Field test and current source status
-
-On 15 October 2026 the indicator was reported working on a real Pantheon installation. The updated 5-hour reset countdown is now included in the repository. Python and shell-script syntax were checked, but a clean-system install and Wingpanel compilation have not been independently verified. No stable release has been tagged.
-
-If the panel says `Codex: unavailable` but running `python3 codex-limits.py --short` in your working directory prints percentages, first verify which script is installed:
-
-```bash
-ls -l ~/.local/bin/codex-limits
-python3 ~/.local/share/codex-monitor/codex-limits.py --short
-codex-limits --short
+```text
+Codex 5h 63% (reset 3h 31m) | 7d 62%
 ```
 
-The panel uses `~/.local/share/codex-monitor/codex-limits.py`, **not** the file in the downloaded project directory. Changing a downloaded copy does not automatically update the installed copy. Avoid running commands from untrusted sources.
+Example values only. Percentages mean **remaining**, not used. The indicator refreshes on startup, when opened and every 60 seconds. Requests run in a worker thread and never overlap. No Python packages are required.
+
+Version **1.0.0-rc.1** is a public prerelease. The existing indicator was confirmed working by its user on elementary OS 8.1. Compilation, live queries and isolated installation/uninstallation were tested with Wingpanel 8.0.4 and Codex CLI 0.162.1. Loading the new installation in a running panel and a clean installation on another machine remain unverified. Not affiliated with OpenAI or elementary.
 
 ## Requirements
 
-- Linux distribution with Pantheon / Wingpanel 8 (tested target: Wingpanel 8.0.4; actual plugin loading must still be verified)
-- Codex CLI with `codex app-server` and ChatGPT login (tested live-query protocol with Codex CLI 0.162.1)
-- Python 3, Vala, GTK 3 and Wingpanel development headers for compilation
-- Network connectivity for live usage information
+- Linux with Pantheon and Wingpanel 8; this is not a macOS, GNOME, KDE or XFCE tray app.
+- Debian/Ubuntu-based distribution for the supplied installer, with `apt-get` and `sudo`.
+- [Official Codex CLI](https://developers.openai.com/codex/cli/) on your terminal's `PATH`, logged in with a ChatGPT account that provides Codex rate limits. API-key-only accounts may not expose these quotas.
+- Python 3.8+, Bash, a C compiler, Vala, pkg-config, GTK 3, GLib and Wingpanel development files.
+- Network access for live queries.
 
-No API key, `pipx`, or extra paid API access required. Login tokens are managed by Codex CLI, not this project.
+The installer offers to install missing build packages:
 
-## Install
+```bash
+sudo apt-get install build-essential valac pkg-config libwingpanel-dev libgtk-3-dev libglib2.0-dev python3
+```
+
+Wingpanel development packages must be available in your distribution repositories. No API key, pip packages or additional paid API access are needed.
+
+## Download and install
+
+Download and extract the source archive from [Releases](https://github.com/Cautus76/codex-monitor/releases), open a terminal in the extracted folder, then run:
 
 ```bash
 bash install.sh
 ```
 
-The installer checks Codex and Wingpanel, prompts before installing missing build dependencies via `apt`, offers official Codex login when needed, compiles the indicator and installs it using `sudo` only for the Wingpanel system library. Log out and log back in afterwards.
-
-The installer currently targets Debian/Ubuntu-based systems. Other desktops (KDE, GNOME, XFCE) are **not** supported by this Wingpanel plugin.
-
-## Verify
+Alternatively, with Git installed:
 
 ```bash
-codex login status
-codex-limits
-codex-limits --json
-file build/libcodex-monitor.so
-nm -D build/libcodex-monitor.so | grep get_indicator
+git clone https://github.com/Cautus76/codex-monitor.git
+cd codex-monitor
+bash install.sh
 ```
 
-Example (not live data):
+Run as your normal desktop user, **without `sudo`**. The installer offers the official `codex login` if needed, compiles the module, and checks live limits before replacing installed program files. It requests administrator access for packages and the system Wingpanel module. Log out and back in to load the indicator. Updates use the same procedure.
 
-```text
-5-hour limit: 0% left
-  Reset: 15.10.2026 21:40
-Weekly limit: 68% left
-  Reset: 22.10.2026 11:09
-```
+Installed files:
 
-Check installation path using:
+- `~/.local/share/codex-monitor/codex-limits.py`: helper actually used by the panel.
+- `~/.local/share/codex-monitor/codex-path`: local CLI executable path, so terminal and desktop PATH differences do not break queries.
+- `~/.local/share/codex-monitor/indicators-dir`: module directory recorded for uninstallation.
+- `~/.local/bin/codex-limits`: terminal command symlink.
+- `$(pkg-config --variable=indicatorsdir wingpanel)/libcodex-monitor.so`: system module.
+
+Editing downloaded sources does not update the installed files. Rerun the installer after updating sources or moving the Codex CLI.
+
+## Terminal usage
 
 ```bash
-pkg-config --variable=indicatorsdir wingpanel
+~/.local/bin/codex-limits
+~/.local/bin/codex-limits --short
+~/.local/bin/codex-limits --json
+~/.local/bin/codex-limits --lang cs
+~/.local/bin/codex-limits --version
 ```
 
-The top-panel indicator may require logout/login to load. Compilation success alone does not prove it loaded. If the panel does not appear, inspect `journalctl --user` and Wingpanel startup logs.
+Use `codex-limits` directly if `~/.local/bin` is on your PATH. English and Czech output are supported; helper language follows `LC_ALL`, `LC_MESSAGES`, then `LANG`. JSON includes remaining percentages, Unix reset timestamps and window durations in minutes when supplied by Codex. Detailed text prints reset times in your local timezone. The panel countdown rounds up to a minute and updates with each refresh, rather than every second. Elapsed reset timestamps display zero until the server supplies updated data.
 
 ## Uninstall
 
-From the project folder:
+From the extracted or cloned project folder, as your normal user:
 
 ```bash
 bash uninstall.sh
 ```
 
-Log out and log back in to unload the removed plugin. Uninstallation does **not** remove Codex CLI, your authentication or system build tools.
+Log out and back in. This removes the module and helper files, leaving Codex CLI, its authentication and system build packages installed. A system module is shared across desktop users; removal affects all users of this module.
 
-## Languages
+## Troubleshooting
 
-- English: default
-- Czech: automatically when `LANG`/`LC_ALL` starts with `cs`
+- **Unavailable:** run `codex login status`, then `codex login` if needed. Check connectivity and run `python3 codex-limits.py --short`. Authentication, empty limits, server errors and a 20-second query timeout produce an unavailable state rather than stale percentages. A failed refresh retries on the next 60-second interval or when opened.
+- **Terminal works, panel fails:** test `python3 ~/.local/share/codex-monitor/codex-limits.py --short`. Rerun the installer from a terminal where `codex` works to refresh the saved executable path. The CLI and its runtime (for example Node.js) must also work in the desktop session.
+- **Command not found:** use `~/.local/bin/codex-limits`, or add `~/.local/bin` to your shell PATH.
+- **No indicator:** log out and back in, check `pkg-config --variable=indicatorsdir wingpanel`, and inspect `journalctl --user -b` for Wingpanel errors. Successful compilation alone does not verify panel loading.
+- **Missing Wingpanel headers:** install `libwingpanel-dev` from your distribution; another desktop panel cannot load this module.
+- **Duplicate indicator:** an old `libcodex-limits.so` prototype may still exist. The installer warns about it but leaves it intact. Remove that old prototype only after identifying it.
+- **CLI upgrade changes responses:** update Codex and this project together. The app-server interface is experimental. Include OS, Wingpanel and CLI versions in bug reports; redact private log content.
 
-For terminal override use `codex-limits --lang en` or `codex-limits --lang cs`.
+## Privacy and implementation
 
-## Notes and limits
+The helper uses the official [Codex app-server protocol](https://developers.openai.com/codex/app-server): initialize, initialized, then `account/rateLimits/read` over local stdio. It does not start inference turns or read authentication files. Codex CLI manages login and connects to OpenAI. The monitor stores no usage history or credentials, adds no telemetry, and does not expose the server over a network socket. Server error payloads are not echoed. Codex itself may retain logs according to its own settings.
 
-- Queries `account/rateLimits/read` through `codex app-server --stdio` with the existing CLI login. It does not read or publish `~/.codex/auth.json`.
-- If offline or unauthenticated, displays an unavailable state rather than stale numbers.
-- Queries every 60 seconds when loaded in the panel. The 5-hour reset countdown is computed from the reported reset timestamp. The remote API and CLI behavior may change across Codex versions.
-- Never run unknown installation scripts without reviewing them first.
+Never commit login files, local CLI paths or real account output. See [LICENSE](LICENSE) (MIT) and [CHANGELOG.md](CHANGELOG.md).
+
+## Development checks
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 -m py_compile codex-limits.py
+bash -n install.sh uninstall.sh
+python3 tests/install-smoke.py
+python3 codex-limits.py --short
+```
+
+The smoke test needs build dependencies. It uses real Vala compilation, temporary HOME/plugin directories, a fake Codex server and a sudo wrapper, without changing the running installation. The final command is the separate real-account/network check; do not publish its output. See [VALIDATION.md](VALIDATION.md) for release evidence and remaining validation.

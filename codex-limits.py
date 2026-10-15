@@ -2,6 +2,9 @@
 """Query the official Codex app-server for rate limits; never handle credentials."""
 import argparse
 import json
+import math
+from pathlib import Path
+import shutil
 import os
 import select
 import subprocess
@@ -11,11 +14,27 @@ from datetime import datetime
 
 
 def language(choice):
-    return choice if choice != 'auto' else ('cs' if os.environ.get('LC_ALL', os.environ.get('LANG', '')).lower().startswith('cs') else 'en')
+    return choice if choice != 'auto' else ('cs' if (os.environ.get('LC_ALL') or os.environ.get('LC_MESSAGES') or os.environ.get('LANG', '')).lower().startswith('cs') else 'en')
+
+
+VERSION = '1.0.0-rc.1'
+
+
+def codex_executable():
+    # The desktop session may not inherit the terminal's PATH.
+    configured = Path(__file__).resolve().with_name('codex-path')
+    if configured.is_file():
+        executable = configured.read_text().strip()
+        if os.path.isabs(executable) and os.access(executable, os.X_OK):
+            return executable
+    executable = shutil.which('codex')
+    if executable:
+        return executable
+    raise RuntimeError('Codex CLI not found; rerun install.sh from your terminal')
 
 
 def query(timeout=20):
-    process = subprocess.Popen(['codex', 'app-server', '--stdio'], stdin=subprocess.PIPE,
+    process = subprocess.Popen([codex_executable(), 'app-server', '--stdio'], stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
     pending = b''
     deadline = time.monotonic() + timeout
@@ -33,9 +52,9 @@ def query(timeout=20):
                     reply = json.loads(row)
                 except (ValueError, UnicodeError):
                     continue
-                if reply.get('id') == request_id:
+                if isinstance(reply, dict) and reply.get('id') == request_id:
                     if 'error' in reply:
-                        raise RuntimeError(str(reply['error']))
+                        raise RuntimeError('Codex rejected the rate-limit request; check codex login status')
                     return reply.get('result', {})
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -47,16 +66,20 @@ def query(timeout=20):
             if not chunk:
                 raise RuntimeError('Codex app-server closed the connection')
             pending += chunk
+            if len(pending) > 1048576:
+                raise RuntimeError('Oversized Codex app-server message')
         raise TimeoutError('Codex app-server timed out')
 
     try:
         send({'method': 'initialize', 'id': 1, 'params': {'clientInfo': {
-            'name': 'codex_limits_monitor', 'title': 'Codex Limits Monitor', 'version': '0.2.0'}}})
+            'name': 'codex_limits_monitor', 'title': 'Codex Limits Monitor', 'version': VERSION}}})
         receive(1)
         send({'method': 'initialized'})
         send({'method': 'account/rateLimits/read', 'id': 2})
         response = receive(2)
         limits = response.get('rateLimits') or {}
+        if not isinstance(limits, dict):
+            raise ValueError('Invalid rate limits response')
         if not limits:
             raise ValueError('Empty rate limits response')
         return limits
@@ -71,6 +94,7 @@ def query(timeout=20):
 
 def main():
     parser = argparse.ArgumentParser(description='Codex rate limits / Limity Codexu')
+    parser.add_argument('--version', action='version', version=VERSION)
     parser.add_argument('--lang', choices=['en', 'cs', 'auto'], default='auto')
     parser.add_argument('--json', action='store_true', help='Machine-readable output')
     parser.add_argument('--short', action='store_true', help='Single-line panel output')
@@ -81,9 +105,15 @@ def main():
         result = {'ok': True, 'source': 'codex-app-server', 'queried_at': int(time.time()), 'limits': {}}
         for key in ('primary', 'secondary'):
             value = limits.get(key)
-            if value and value.get('usedPercent') is not None:
-                result['limits'][key] = {'left_percent': max(0, min(100, 100-float(value['usedPercent']))),
-                                         'resets_at': value.get('resetsAt'), 'window_minutes': value.get('windowMinutes')}
+            if isinstance(value, dict) and value.get('usedPercent') is not None:
+                used = float(value['usedPercent'])
+                if not math.isfinite(used):
+                    raise ValueError('Invalid usage percentage')
+                reset = value.get('resetsAt')
+                if reset is not None and (not isinstance(reset, (int, float)) or not math.isfinite(reset)):
+                    raise ValueError('Invalid reset timestamp')
+                result['limits'][key] = {'left_percent': max(0, min(100, 100-used)),
+                                         'resets_at': value.get('resetsAt'), 'window_minutes': value.get('windowDurationMins', value.get('windowMinutes'))}
         if not result['limits']:
             raise ValueError('No percentage values in response')
         if options.json:
@@ -92,7 +122,7 @@ def main():
             parts = [f"{label} {result['limits'][key]['left_percent']:.0f}%" for key, label in [('primary', '5h'), ('secondary', '7d')] if key in result['limits']]
             primary = result['limits'].get('primary')
             if primary and primary.get('resets_at') and 'primary' in result['limits']:
-                remaining = max(0, int(primary['resets_at'] - time.time()))
+                remaining = max(0, math.ceil(primary['resets_at'] - time.time()))
                 hours, remainder = divmod(remaining, 3600)
                 minutes = (remainder + 59) // 60
                 if minutes == 60:
